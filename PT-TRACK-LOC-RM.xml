@@ -21,7 +21,7 @@
 	</Encodings>
 	<DynamicDef AccAck="NE" AppAck="AL" MsgAckMode="Deferred" />
 	<HL7v2xStaticDef MsgType="ADT" EventType="A10"
-		MsgStructID="ADT_A09" EventDesc="Patient arriving - tracking" Role="Sender" >
+		MsgStructID="ADT_A09" EventDesc="Patient arriving - tracking" Role="Sender">
 		<MetaData Name="Patient Arrival Notification" OrgName="Region Midt"
 			Version="1.0.0" Status="DRAFT"
 			Topics="confsig-Region Midt-2.5-static-ADT-A10-null-ADT_A09-1.0.0-DRAFT-Sender" />

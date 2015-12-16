@@ -1,14 +1,15 @@
 package org.jkiddo.web;
 
-import java.io.File;
 import java.util.Map;
 
+import javax.servlet.ServletContextEvent;
 import javax.xml.bind.JAXBException;
 
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.codehaus.jackson.map.SerializationConfig.Feature;
 import org.jkiddo.hapi.v2x.ihe.IHEProfileFileStore;
 import org.jkiddo.hapi.v2x.ihe.TypedProfileStore;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -24,21 +25,27 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 public class ContextListener extends GuiceServletContextListener {
 
+	private final IHEProfileFileStore profileStore = new IHEProfileFileStore();
+	private final HAPIServer hapiServer;
+
+	public ContextListener() throws JAXBException {
+		super();
+		hapiServer = new HAPIServer(profileStore);
+	}
+
 	@Override
 	protected Injector getInjector() {
 
+		SLF4JBridgeHandler.removeHandlersForRootLogger();
+		SLF4JBridgeHandler.install();
 		return Guice.createInjector(new AbstractModule() {
 
 			@Override
 			protected void configure() {
 
-				try {
-					bind(TypedProfileStore.class).toInstance(
-							new IHEProfileFileStore(new File(".")));
-				} catch (JAXBException e) {
-					throw new RuntimeException("Unable to create store");
-				}
+				bind(TypedProfileStore.class).toInstance(profileStore);
 				bind(ValidationServlet.class).asEagerSingleton();
+				bind(HAPIServer.class).toInstance(hapiServer);
 			}
 
 		}, new JerseyServletModule() {
@@ -61,5 +68,11 @@ public class ContextListener extends GuiceServletContextListener {
 				serve("/*").with(GuiceContainer.class, params);
 			}
 		});
+	}
+
+	@Override
+	public void contextDestroyed(ServletContextEvent servletContextEvent) {
+		hapiServer.close();
+		super.contextDestroyed(servletContextEvent);
 	}
 }

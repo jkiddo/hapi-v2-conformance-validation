@@ -11,10 +11,10 @@ public class IHEHapiContext extends DefaultHapiContext {
 
 	public IHEHapiContext(ProfileStore profileStore) {
 		super();
-		v = new IHEValidator<>(this);
 		this.setValidationExceptionHandlerFactory(new RespondingValidationExceptionHandler(
 				this));
 		this.setProfileStore(profileStore);
+		v = new IHEValidator<>(this);
 	}
 
 	@SuppressWarnings("unchecked")

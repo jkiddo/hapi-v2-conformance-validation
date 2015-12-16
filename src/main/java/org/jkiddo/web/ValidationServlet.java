@@ -14,9 +14,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBException;
 
-import net.ihe.gazelle.xsd.HL7V2XConformanceProfile;
-
 import org.jkiddo.hapi.v2x.ihe.TypedProfileStore;
+import org.openehealth.ipf.gazelle.validation.core.stub.HL7V2XConformanceProfile;
 
 import ca.uhn.hl7v2.conf.ProfileException;
 
@@ -39,12 +38,11 @@ public class ValidationServlet {
 	}
 
 	@POST
-	@Path("")
 	@Produces({ MediaType.TEXT_PLAIN })
 	@Consumes({ MediaType.APPLICATION_XML })
 	public String addConformanceSpec(final HL7V2XConformanceProfile cs)
 			throws IOException, JAXBException {
-		return addConformanceSpec(cs.getIdentifer(), cs);
+		return addConformanceSpec(cs.getIdentiifer(), cs);
 	}
 
 	@POST

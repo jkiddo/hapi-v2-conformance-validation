@@ -61,7 +61,7 @@ public class IHEValidator<T> extends DefaultValidator<T> implements
 			try {
 				runtimeProfile = getRuntimeProfile(profileIdentifier);
 			} catch (IOException | ProfileException e) {
-				throw new RuntimeException(
+				throw new HL7Exception(
 						"Profile could not be identified by ID: "
 								+ profileIdentifier, e);
 			}

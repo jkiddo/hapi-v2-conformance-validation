@@ -5,7 +5,8 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import net.ihe.gazelle.xsd.HL7V2XConformanceProfile;
+import org.openehealth.ipf.gazelle.validation.core.stub.HL7V2XConformanceProfile;
+
 import ca.uhn.hl7v2.conf.ProfileException;
 import ca.uhn.hl7v2.conf.store.ProfileStore;
 
