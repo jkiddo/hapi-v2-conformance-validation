@@ -5,28 +5,47 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+
+import net.ihe.gazelle.xsd.HL7V2XConformanceProfile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.uhn.hl7v2.conf.ProfileException;
 import ca.uhn.hl7v2.conf.parser.ProfileParser;
 import ca.uhn.hl7v2.conf.spec.RuntimeProfile;
-import ca.uhn.hl7v2.conf.store.ProfileStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-public class IHEProfileFileStore implements ProfileStore {
+public class IHEProfileFileStore implements TypedProfileStore {
 
 	private final Logger logger = LoggerFactory
 			.getLogger(IHEProfileFileStore.class);
 	private final Map<String, String> profileToContent = new HashMap<String, String>();
 	private final ProfileParser pp = new ProfileParser(true);
 
-	public IHEProfileFileStore(File root) {
+	private final JAXBContext jaxbContext = JAXBContext
+			.newInstance(HL7V2XConformanceProfile.class);
+	private final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+	private final Marshaller marshaller = jaxbContext.createMarshaller();
+
+	public IHEProfileFileStore(File root) throws JAXBException {
+
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
 		logger.debug("Listing files from " + root.getAbsolutePath());
 		File[] files = root.listFiles(new FilenameFilter() {
 
@@ -61,5 +80,37 @@ public class IHEProfileFileStore implements ProfileStore {
 	@Override
 	public void persistProfile(String ID, String profile) throws IOException {
 		throw new RuntimeException("No persistent storage available");
+	}
+
+	@Override
+	public HL7V2XConformanceProfile getTypedProfile(String ID)
+			throws IOException, ProfileException, JAXBException {
+		return toRuntimeProfile(profileToContent.get(ID));
+	}
+
+	@Override
+	public void persistProfile(String ID, HL7V2XConformanceProfile profile)
+			throws IOException, JAXBException {
+		profileToContent.put(ID, toString(profile));
+	}
+
+	@Override
+	public List<String> getAllIds() {
+		List<String> list = Lists.newArrayList();
+		list.addAll(profileToContent.keySet());
+		return list;
+	}
+
+	private HL7V2XConformanceProfile toRuntimeProfile(String string)
+			throws JAXBException {
+		return (HL7V2XConformanceProfile) unmarshaller
+				.unmarshal(new StringReader(string));
+	}
+
+	private String toString(HL7V2XConformanceProfile p) throws JAXBException {
+		StringWriter sw = new StringWriter();
+		marshaller.marshal(p, sw);
+		return sw.toString();
+
 	}
 }
