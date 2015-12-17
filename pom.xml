@@ -39,11 +39,13 @@
 			<groupId>net.ihe.gazelle</groupId>
 			<version>3.0.1</version>
 		</dependency>
+		 
 		<dependency>
 			<groupId>org.openehealth.ipf.gazelle</groupId>
 			<artifactId>ipf-gazelle-validation-commons-core</artifactId>
 			<version>1.0.8</version>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>jul-to-slf4j</artifactId>

@@ -11,7 +11,7 @@ import org.jkiddo.web.ContextListener;
 
 import com.google.inject.servlet.GuiceFilter;
 
-public class Tests {
+public class InMemoryTester {
 	public static void main(String[] args) throws Exception {
 		// The lame example
 
