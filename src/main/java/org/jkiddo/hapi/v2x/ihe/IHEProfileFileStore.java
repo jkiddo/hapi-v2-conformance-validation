@@ -32,19 +32,22 @@ import ca.uhn.hl7v2.conf.spec.RuntimeProfile;
 import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 public class IHEProfileFileStore implements TypedProfileStore {
 
 	private final Logger logger = LoggerFactory
 			.getLogger(IHEProfileFileStore.class);
 	private final ProfileParser pp = new ProfileParser(true);
-	private final Cache<String, String> profileToContent = CacheBuilder.newBuilder().expireAfterAccess(20L, TimeUnit.MINUTES).build();
+	private final Cache<String, String> profileToContent = CacheBuilder
+			.newBuilder().expireAfterAccess(20L, TimeUnit.MINUTES).build();
 
-	private final JAXBContext jaxbContext = JAXBContext
-			.newInstance(HL7V2XConformanceProfile.class, AcknowledgmentType.class, HL7V2XStaticDef.class, MetaDataType.class, SegmentType.class, UseCaseElementType.class);
+	private final JAXBContext jaxbContext = JAXBContext.newInstance(
+			HL7V2XConformanceProfile.class, AcknowledgmentType.class,
+			HL7V2XStaticDef.class, MetaDataType.class, SegmentType.class,
+			UseCaseElementType.class);
 	private final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 	private final Marshaller marshaller = jaxbContext.createMarshaller();
 
@@ -93,12 +96,12 @@ public class IHEProfileFileStore implements TypedProfileStore {
 
 	@Override
 	public String getProfile(String ID) throws IOException {
-		return profileToContent.getIfPresent(ID);
+		return profileToContent.getIfPresent(ID.trim());
 	}
 
 	@Override
 	public void persistProfile(String ID, String profile) throws IOException {
-		profileToContent.put(ID, profile);
+		profileToContent.put(ID.trim(), profile);
 	}
 
 	@Override
@@ -111,6 +114,12 @@ public class IHEProfileFileStore implements TypedProfileStore {
 	public void persistProfile(String ID, HL7V2XConformanceProfile profile)
 			throws IOException, JAXBException {
 		persistProfile(ID, toString(profile));
+	}
+
+	@Override
+	public RuntimeProfile getRuntimeProfile(String profileIdentifier)
+			throws ProfileException, IOException {
+		return pp.parse(getProfile(profileIdentifier));
 	}
 
 	@Override
@@ -130,6 +139,5 @@ public class IHEProfileFileStore implements TypedProfileStore {
 		StringWriter sw = new StringWriter();
 		marshaller.marshal(p, sw);
 		return sw.toString();
-
 	}
 }

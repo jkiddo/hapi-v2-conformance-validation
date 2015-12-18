@@ -7,7 +7,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jkiddo.hapi.v2x.ihe.IHEHapiContext;
-import org.jkiddo.hapi.v2x.ihe.IHEProfileFileStore;
 
 import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.app.SimpleServer;
@@ -21,9 +20,8 @@ public class HAPIServer {
 	private final SimpleServer ss;
 
 	@Inject
-	public HAPIServer(IHEProfileFileStore ps) {
-		IHEHapiContext hapiContext = new IHEHapiContext(ps);
-		ss = new SimpleServer(hapiContext, 2575, false);
+	public HAPIServer(IHEHapiContext hapiContext) {
+		ss = new SimpleServer(hapiContext, 8000, false);
 		ss.registerApplication(new ReceivingApplication() {
 
 			@Override

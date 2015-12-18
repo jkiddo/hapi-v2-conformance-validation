@@ -3,6 +3,9 @@ package org.jkiddo.hapi.v2x.ihe;
 import java.io.IOException;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.ihe.gazelle.hl7.validator.core.GazelleHL7Assertion;
 import net.ihe.gazelle.hl7.validator.core.GazelleValidator;
 import net.ihe.gazelle.hl7.validator.core.ResourceStoreFactory;
@@ -15,9 +18,7 @@ import ca.uhn.hl7v2.AcknowledgmentCode;
 import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.HapiContext;
 import ca.uhn.hl7v2.conf.ProfileException;
-import ca.uhn.hl7v2.conf.parser.ProfileParser;
 import ca.uhn.hl7v2.conf.spec.RuntimeProfile;
-import ca.uhn.hl7v2.conf.store.ProfileStore;
 import ca.uhn.hl7v2.model.Message;
 import ca.uhn.hl7v2.util.Terser;
 import ca.uhn.hl7v2.validation.DefaultValidator;
@@ -29,17 +30,17 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.common.collect.Lists;
 
 public class IHEValidator<T> extends DefaultValidator<T> implements
 		Validator<T> {
 
-	private ProfileStore profileStore;
-	private ProfileParser profileParser = new ProfileParser(true);
+	private final Logger logger = LoggerFactory.getLogger(IHEValidator.class);
+	private TypedProfileStore profileStore;
 
-	public IHEValidator(HapiContext context) {
+	public IHEValidator(HapiContext context, TypedProfileStore tps) {
 		super(context);
-		this.profileStore = context.getProfileStore();
+		this.profileStore = tps;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -50,8 +51,13 @@ public class IHEValidator<T> extends DefaultValidator<T> implements
 		String profileIdentifier = new Terser(incomingMessage).get("/MSH-21");
 
 		// Don't know if this is needed
-		Message returnMessage = (Message) super.validate(incomingMessage,
-				handler);
+		Message returnMessage = null;
+		try {
+			returnMessage = incomingMessage.generateACK();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		if (Strings.isNullOrEmpty(profileIdentifier))
 			return (T) returnMessage;
@@ -59,9 +65,11 @@ public class IHEValidator<T> extends DefaultValidator<T> implements
 
 			RuntimeProfile runtimeProfile;
 			try {
-				runtimeProfile = getRuntimeProfile(profileIdentifier);
+				logger.info("Looking up profile with ID: " + profileIdentifier);
+				runtimeProfile = profileStore
+						.getRuntimeProfile(profileIdentifier);
 			} catch (IOException | ProfileException e) {
-				throw new HL7Exception(
+				throw new HL7Exception(e.getMessage() + " : " +
 						"Profile could not be identified by ID: "
 								+ profileIdentifier, e);
 			}
@@ -112,7 +120,7 @@ public class IHEValidator<T> extends DefaultValidator<T> implements
 					public boolean apply(Object arg0) {
 						return arg0.getClass() != Warning.class;
 					}
-				}).toImmutableList();
+				}).toList();
 
 		Message nackMessage = incoming.generateACK(AcknowledgmentCode.AR, null);
 		List<ValidationException> exceptions = Lists.newArrayList();
@@ -127,15 +135,7 @@ public class IHEValidator<T> extends DefaultValidator<T> implements
 						.getHl7Exception()));
 			}
 		}
-		ValidationException[] a = exceptions
-				.toArray(new ValidationException[0]);
-		handler.onExceptions(a);
+		handler.onExceptions(exceptions.toArray(new ValidationException[0]));
 		return nackMessage;
-	}
-
-	private RuntimeProfile getRuntimeProfile(String profileIdentifier)
-			throws HL7Exception, IOException, ProfileException {
-		String profileAsText = profileStore.getProfile(profileIdentifier);
-		return profileParser.parse(profileAsText);
 	}
 }

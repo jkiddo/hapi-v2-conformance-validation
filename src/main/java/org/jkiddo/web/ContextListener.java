@@ -2,13 +2,18 @@ package org.jkiddo.web;
 
 import java.util.Map;
 
+import javax.inject.Singleton;
 import javax.servlet.ServletContextEvent;
 import javax.xml.bind.JAXBException;
 
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.codehaus.jackson.map.SerializationConfig.Feature;
+import org.ebaysf.web.cors.CORSFilter;
+import org.jkiddo.hapi.v2x.ihe.IHEHapiContext;
 import org.jkiddo.hapi.v2x.ihe.IHEProfileFileStore;
 import org.jkiddo.hapi.v2x.ihe.TypedProfileStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.google.common.base.Joiner;
@@ -25,17 +30,20 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 public class ContextListener extends GuiceServletContextListener {
 
+	private final Logger logger = LoggerFactory.getLogger(ContextListener.class);
 	private final IHEProfileFileStore profileStore = new IHEProfileFileStore();
 	private final HAPIServer hapiServer;
+	private final IHEHapiContext hapiContext = new IHEHapiContext(profileStore);
 
 	public ContextListener() throws JAXBException {
 		super();
-		hapiServer = new HAPIServer(profileStore);
+		hapiServer = new HAPIServer(hapiContext);
 	}
 
 	@Override
 	protected Injector getInjector() {
 
+		logger.info("Starting up servlet ...");
 		SLF4JBridgeHandler.removeHandlersForRootLogger();
 		SLF4JBridgeHandler.install();
 		return Guice.createInjector(new AbstractModule() {
@@ -44,8 +52,10 @@ public class ContextListener extends GuiceServletContextListener {
 			protected void configure() {
 
 				bind(TypedProfileStore.class).toInstance(profileStore);
-				bind(ValidationServlet.class).asEagerSingleton();
 				bind(HAPIServer.class).toInstance(hapiServer);
+				bind(IHEHapiContext.class).toInstance(hapiContext);
+
+				bind(ValidationServlet.class).asEagerSingleton();
 			}
 
 		}, new JerseyServletModule() {
@@ -65,7 +75,9 @@ public class ContextListener extends GuiceServletContextListener {
 				final JacksonJsonProvider instance = new JacksonJsonProvider();
 				instance.configure(Feature.WRITE_DATES_AS_TIMESTAMPS, false);
 				bind(JacksonJsonProvider.class).toInstance(instance);
+				bind(CORSFilter.class).in(Singleton.class);
 				serve("/*").with(GuiceContainer.class, params);
+				filter("/*").through(CORSFilter.class);
 			}
 		});
 	}
