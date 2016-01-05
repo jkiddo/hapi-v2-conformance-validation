@@ -209,6 +209,8 @@ public class GazelleValidator {
 					continue;
 				}
 				if (messageStructures != null) {
+					currentSegmentName = msgGroup.getName();
+                    currentFieldNumber = -1;
 					testCardinality(messageStructures.length, profileStructure.getMin(), profileStructure.getMax(),
 							profileStructure.getUsage(), profileStructure.getName(),
 							GazelleErrorCode.SEGMENT_SEQUENCE_ERROR);
@@ -314,10 +316,22 @@ public class GazelleValidator {
 				results.addNotification("Element '" + name
 						+ "' is specified as required (R) but not present in the message", errorTypeIfMissing, hl7Path,
 						null);
+				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
+                        currentSegmentName);
+                if (currentFieldNumber >= 0) {
+                    ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
+                            currentFieldNumber);
+                }
 				return;
 			} else if ((reps > 0) && (reps < min)) {
 				results.addNotification(name + " must have at least " + min + " repetitions (has " + reps + ")",
 						GazelleErrorCode.CARDINALITY_ERROR, hl7Path, null);
+				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
+                        currentSegmentName);
+                if (currentFieldNumber >= 0) {
+                    ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
+                            currentFieldNumber);
+                }				
 				return;
 			} else {
 				results.addAssertion(name + " shall be present", hl7Path, AssertionType.REQUIRED_ELEMENT);

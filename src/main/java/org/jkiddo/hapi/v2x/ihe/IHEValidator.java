@@ -55,8 +55,7 @@ public class IHEValidator<T> extends DefaultValidator<T> implements
 		try {
 			returnMessage = incomingMessage.generateACK();
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			throw new RuntimeException(e1.getMessage(), e1);
 		}
 
 		if (Strings.isNullOrEmpty(profileIdentifier))
