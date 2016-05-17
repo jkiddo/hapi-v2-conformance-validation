@@ -71,6 +71,33 @@ public class GazelleHL7Assertion {
 		this.type = inType;
 	}
 
+	/**
+	 * Get the assertion.
+	 *
+	 * @return The assertion.
+     */
+	public String getAssertion() {
+		return assertion;
+	}
+
+	/**
+	 * Get the path.
+	 *
+	 * @return The path.
+     */
+	public String getPath() {
+		return path;
+	}
+
+	/**
+	 * Get the assertion type.
+	 *
+	 * @return The assertion type.
+     */
+	public AssertionType getType() {
+		return type;
+	}
+
 	@Override
 	public String toString() {
 		return this.path + ": " + this.assertion;

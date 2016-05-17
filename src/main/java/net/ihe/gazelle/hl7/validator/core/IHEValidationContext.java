@@ -6,9 +6,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.uhn.hl7v2.validation.impl.ValidationContextImpl;
 import net.ihe.gazelle.hl7.validator.rules.IHERuleBinding;
 import net.ihe.gazelle.hl7.validator.rules.IHEValidationRule;
-import ca.uhn.hl7v2.validation.impl.ValidationContextImpl;
 
 public class IHEValidationContext extends ValidationContextImpl {
 
@@ -31,17 +31,16 @@ public class IHEValidationContext extends ValidationContextImpl {
 	private static void listRules() {
 		myIHERuleBindings = new ArrayList<IHERuleBinding>();
 
-		
+
 	}
 
-	public List<IHEValidationRule> getIHEValidationRules(String profileOid, String messageProfileIdentifier,
-			String hl7path) {
+	public List<IHEValidationRule> getIHEValidationRules(final String profileOid,
+                                                         String hl7path) {
 		hl7path = hl7path.replaceAll("\\[[0-9]*\\]", "");
 		hl7path = hl7path.replaceAll("\\([^\\)]*[^/]*\\)", "");
-		List<IHEValidationRule> active = new ArrayList<IHEValidationRule>();
-		for (IHERuleBinding binding : myIHERuleBindings) {
-			if (binding.getActive() && binding.appliesToVersion(profileOid) && binding.appliesToScope(hl7path)
-					&& binding.appliesToMessagProfileIdentifier(messageProfileIdentifier)) {
+		final List<IHEValidationRule> active = new ArrayList<IHEValidationRule>();
+		for (final IHERuleBinding binding : myIHERuleBindings) {
+			if (binding.getActive() && binding.appliesToVersion(profileOid) && binding.appliesToScope(hl7path)) {
 				active.add(binding.getRule());
 			}
 		}

@@ -137,6 +137,8 @@ public class ResourceCodeStore extends AbstractCodeStore {
 			InputSource inputSource = new InputSource(reader);
 			inputSource.setEncoding("UTF-8");
 			saxParser.parse(inputSource, this);
+            bais.close();
+            reader.close();
 		}
 	}
 

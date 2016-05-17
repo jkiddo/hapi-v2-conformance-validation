@@ -49,8 +49,9 @@ import ca.uhn.hl7v2.validation.impl.ValidationContextImpl;
  */
 public class GazelleValidator {
 
-	private static final String MSH_21 = "/MSH-21";
-	// used to check for content in parts of a message
+    public static final String LOCAL_TABLE_REGEX = "99[\\w]{3}";
+    public static final String NULL_STRING = "\"\"";
+    // used to check for content in parts of a message
 	private static Logger log = LoggerFactory.getLogger(GazelleValidator.class);
 	private static final IHEValidationContext VALIDATION_CONTEXT = IHEValidationContext.SINGLETON;
 	private static final String EVENT_TYPE_LOCATION = "/MSH-9-2";
@@ -67,7 +68,6 @@ public class GazelleValidator {
 	private String currentSegmentName;
 	private int currentFieldNumber;
 	private ValidationResults results;
-	private String messageProfileIdentifier;
 
 	/**
 	 * creates a new instance of MyDefaultValidator
@@ -147,9 +147,9 @@ public class GazelleValidator {
 					null, null);
 			((GazelleHL7Exception) results.getLastNotification()).setHl7Path(MESSAGE_STRUCTURE_LOCATION);
 		} else if (msgStruct == null && !inMessage.getClass().getSimpleName().equals(profile.getMsgStructID())) {
-			results.addNotification("MSH-9-3 is empty, hapi uses " + inMessage.getClass().getSimpleName()
+			results.addNotification("MSH-9-3 is empty, message structure used to parse the message is " + inMessage.getClass().getSimpleName()
 					+ " which does not match the structure declared in the profile (" + profile.getMsgStructID()
-					+ "), the outcome of the validation might not be accurate.", null, null);
+					+ "), the outcome of the validation might not be accurate.", GazelleErrorCode.WARNING, null, null);
 			((GazelleHL7Exception) results.getLastNotification()).setHl7Path(MESSAGE_STRUCTURE_LOCATION);
 		}
 
@@ -167,12 +167,6 @@ public class GazelleValidator {
 			((GazelleHL7Exception) results.getLastNotification()).setHl7Path(MESSAGE_VERSION_LOCATION);
 		}
 
-		try {
-			// store message profile identifiers for future use
-			messageProfileIdentifier = t.get(MSH_21);
-		}catch (HL7Exception e){
-			messageProfileIdentifier = null;
-		}
 		// check message groups
 		hl7Path = new PathBuilder();
 		hl7Path.add(inMessage.getName());
@@ -185,7 +179,6 @@ public class GazelleValidator {
 	public void testGroup(Group msgGroup, AbstractSegmentContainer profile, String profileID) {
 		List<String> allowedStructures = new ArrayList<String>();
 		List<String> forbiddenStructures = new ArrayList<String>();
-
 		for (int childIndex = 1; childIndex <= profile.getChildren(); childIndex++) {
 			ProfileStructure profileStructure = profile.getChild(childIndex);
 			hl7Path.add(profileStructure.getName());
@@ -209,7 +202,7 @@ public class GazelleValidator {
 					continue;
 				}
 				if (messageStructures != null) {
-					currentSegmentName = msgGroup.getName();
+                    currentSegmentName = msgGroup.getName();
                     currentFieldNumber = -1;
 					testCardinality(messageStructures.length, profileStructure.getMin(), profileStructure.getMax(),
 							profileStructure.getUsage(), profileStructure.getName(),
@@ -316,7 +309,7 @@ public class GazelleValidator {
 				results.addNotification("Element '" + name
 						+ "' is specified as required (R) but not present in the message", errorTypeIfMissing, hl7Path,
 						null);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
+                ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
                         currentSegmentName);
                 if (currentFieldNumber >= 0) {
                     ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
@@ -326,12 +319,12 @@ public class GazelleValidator {
 			} else if ((reps > 0) && (reps < min)) {
 				results.addNotification(name + " must have at least " + min + " repetitions (has " + reps + ")",
 						GazelleErrorCode.CARDINALITY_ERROR, hl7Path, null);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
+                ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
                         currentSegmentName);
                 if (currentFieldNumber >= 0) {
                     ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
                             currentFieldNumber);
-                }				
+                }
 				return;
 			} else {
 				results.addAssertion(name + " shall be present", hl7Path, AssertionType.REQUIRED_ELEMENT);
@@ -340,7 +333,7 @@ public class GazelleValidator {
 		case CONDITIONAL:
 			// check message rules
 			List<IHEValidationRule> rules = VALIDATION_CONTEXT.getIHEValidationRules(profileOid,
-					messageProfileIdentifier, hl7Path.toString());
+                    hl7Path.toString());
 			if (!rules.isEmpty()) {
 				for (IHEValidationRule rule : rules) {
 					ValidationException[] validationExceptions = rule.test(message, hl7Path.toString());
@@ -539,14 +532,15 @@ public class GazelleValidator {
 		}
 	}
 
-	/**
-	 * Tests a Type against the corresponding section of a profile.
-	 * 
-	 * @param value
-	 *            optional encoded form of type (if you want to specify this -- if null, default pipe-encoded form is used to check length and constant val)
-	 * @param testUsage
-	 * 
-	 */
+    /**
+     * Tests a Type against the corresponding section of a profile.
+     * @param msgType
+     * @param profileType
+     * @param encoded
+     *          optional encoded form of type (if you want to specify this -- if null, default pipe-encoded form is used to check length and constant val)
+     * @param profileID
+     * @param testUsage
+     */
 	public void testType(Type msgType, AbstractComponent<?> profileType, String encoded, String profileID,
 			boolean testUsage) {
 		String value = encoded;
@@ -579,21 +573,23 @@ public class GazelleValidator {
 						AssertionType.DATATYPE);
 			}
 
-			// check length
-			if (value.length() > profileType.getLength()) {
-				results.addNotification(
-						"Element '" + profileType.getName() + "' has length " + value.length()
-								+ " which exceeds the maximum length defined in the message profile ("
-								+ profileType.getLength() + ")", GazelleErrorCode.LENGTH_ERROR, hl7Path, value);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
-						currentSegmentName);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
-						currentFieldNumber);
-			} else {
-				results.addAssertion(
-						"Length of the element does not exceed the length defined in the message profile ("
-								+ profileType.getLength() + ")", hl7Path, AssertionType.LENGTH);
-			}
+			// check length if element not null
+            if (!value.equals(NULL_STRING)) {
+                if (value.length() > profileType.getLength()) {
+                    results.addNotification(
+                            "Element '" + profileType.getName() + "' has length " + value.length()
+                                    + " which exceeds the maximum length defined in the message profile ("
+                                    + profileType.getLength() + ")", GazelleErrorCode.LENGTH_ERROR, hl7Path, value);
+                    ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
+                            currentSegmentName);
+                    ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
+                            currentFieldNumber);
+                } else {
+                    results.addAssertion(
+                            "Length of the element does not exceed the length defined in the message profile ("
+                                    + profileType.getLength() + ")", hl7Path, AssertionType.LENGTH);
+                }
+            }
 
 			// check constant value
 			if ((value.length() > 0) && (profileType.getConstantValue() != null)
@@ -636,63 +632,64 @@ public class GazelleValidator {
 	 * @returns null if there is no problem, an GazelleHL7Exception otherwise
 	 */
 	private void testUsage(String encoded, String usage, String name) {
-		Optionality optionality = Optionality.getEnum(usage);
-		switch (optionality) {
-		case REQUIRED:
-			if (encoded.isEmpty()) {
-				results.addNotification("Required element '" + name + "' is missing", GazelleErrorCode.USAGE, hl7Path,
-						null);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
-						currentSegmentName);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
-						currentFieldNumber);
-				return;
-			} else {
-				results.addAssertion(name + " shall be present", hl7Path, AssertionType.REQUIRED_ELEMENT);
-			}
-			break;
-		case CONDITIONAL:
-			List<IHEValidationRule> rules = VALIDATION_CONTEXT.getIHEValidationRules(profileOid,
-					messageProfileIdentifier, hl7Path.toString());
-			if (!rules.isEmpty()) {
-				for (IHEValidationRule rule : rules) {
-					ValidationException[] validationExceptions = rule.test(message, hl7Path.toString());
-					if (validationExceptions != null) {
-						for (ValidationException ve : validationExceptions) {
-							results.addNotification(ve.getMessage() + (" (see " + rule.getSectionReference() + ")"),
-									rule.getSeverity(), hl7Path, null);
-						}
-						return;
-					}
-					else {
-						results.addAssertion("Conditional usage OK", hl7Path, AssertionType.CARDINALITY);
-					}
-				}
-			} else {
-				results.addNotification(
-						"The optionality of this element is set as 'conditional' and no rule has been defined, "
-								+ "refer to the specification to check the optionality which applies in the context of this message",
-						GazelleErrorCode.CONDITIONAL, hl7Path, null);
-			}
-			break;
-		case NOT_SUPPORTED:
-			if (!encoded.isEmpty()) {
-				results.addNotification("Element " + name
-						+ " is present in the message but specified as not used (X) in the message profile",
-						GazelleErrorCode.USAGE, hl7Path, encoded);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
-						currentSegmentName);
-				((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
-						currentFieldNumber);
-				return;
-			} else {
-				results.addAssertion(name + " shall not be present", hl7Path, AssertionType.FORBIDDEN_ELEMENT);
-			}
-			break;
-		default:
-			break;
-		}
-	}
+        if (usage != null) {
+            Optionality optionality = Optionality.getEnum(usage);
+            switch (optionality) {
+                case REQUIRED:
+                    if (encoded.isEmpty()) {
+                        results.addNotification("Required element '" + name + "' is missing", GazelleErrorCode.USAGE, hl7Path,
+                                null);
+                        ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
+                                currentSegmentName);
+                        ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
+                                currentFieldNumber);
+                        return;
+                    } else {
+                        results.addAssertion(name + " shall be present", hl7Path, AssertionType.REQUIRED_ELEMENT);
+                    }
+                    break;
+                case CONDITIONAL:
+                    List<IHEValidationRule> rules = VALIDATION_CONTEXT.getIHEValidationRules(profileOid,
+                            hl7Path.toString());
+                    if (!rules.isEmpty()) {
+                        for (IHEValidationRule rule : rules) {
+                            ValidationException[] validationExceptions = rule.test(message, hl7Path.toString());
+                            if (validationExceptions != null) {
+                                for (ValidationException ve : validationExceptions) {
+                                    results.addNotification(ve.getMessage() + (" (see " + rule.getSectionReference() + ")"),
+                                            rule.getSeverity(), hl7Path, null);
+                                }
+                                return;
+                            } else {
+                                results.addAssertion("Conditional usage OK", hl7Path, AssertionType.CARDINALITY);
+                            }
+                        }
+                    } else {
+                        results.addNotification(
+                                "The optionality of this element is set as 'conditional' and no rule has been defined, "
+                                        + "refer to the specification to check the optionality which applies in the context of this message",
+                                GazelleErrorCode.CONDITIONAL, hl7Path, null);
+                    }
+                    break;
+                case NOT_SUPPORTED:
+                    if (!encoded.isEmpty()) {
+                        results.addNotification("Element " + name
+                                        + " is present in the message but specified as not used (X) in the message profile",
+                                GazelleErrorCode.USAGE, hl7Path, encoded);
+                        ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setSegmentName(
+                                currentSegmentName);
+                        ((GazelleHL7Exception) results.getLastNotification()).getHl7Exception().setFieldPosition(
+                                currentFieldNumber);
+                        return;
+                    } else {
+                        results.addAssertion(name + " shall not be present", hl7Path, AssertionType.FORBIDDEN_ELEMENT);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 
 	/**
 	 * Tests table values for ID, IS, and CE types. An empty list is returned for all other types or if the table name or number is missing.
@@ -721,38 +718,51 @@ public class GazelleValidator {
 		}
 	}
 
-	private void testValueAgainstTable(String profileID, String tableID, String value) {
-		ResourceCodeStore store = (ResourceCodeStore) resourceStoreFactory.getCodeStore(profileID, tableID);
-		if (store == null) {
-			results.addProfileException("No code store found for ID " + tableID, hl7Path, null);
-		} else {
-			try {
-				List<String> validCodes = Arrays.asList(store.getValidCodes(tableID));
-				if (!validCodes.isEmpty() && !validCodes.contains(value)) {
-					StringBuilder possibleCode = null;
-					for (String code : validCodes) {
-						if (possibleCode == null) {
-							possibleCode = new StringBuilder(code);
-						} else {
-							possibleCode.append(", ");
-							possibleCode.append(code);
-						}
+    private boolean isTableLocal(String tableID){
+        return (tableID != null && (tableID.equals("L") || tableID.matches(LOCAL_TABLE_REGEX)));
+    }
 
-					}
-					results.addNotification("Code " + value + " not found in table " + tableID
-							+ ". Possible values are " + possibleCode.toString(),
-							GazelleErrorCode.TABLE_VALUE_NOT_FOUND, hl7Path, value);
-					((GazelleHL7Exception) results.getLastNotification()).setHl7tableId(store.getResourceOid() + "#"
-							+ tableID.replace("HL7", ""));
-				} else if (validCodes.contains(value)) {
-					results.addAssertion(value + " is present in table " + tableID, hl7Path, AssertionType.VALUE);
-				}
-			} catch (ProfileException e) {
-				results.addProfileException(
-						"An error occurred when retrieving values from table " + tableID + ": " + e.getMessage(),
-						hl7Path, null);
-			}
-		}
+	private void testValueAgainstTable(String profileID, String tableID, String value) {
+        if (value != null && value.equals(NULL_STRING)){
+            results.addAssertion("Field is set to NULL (" + NULL_STRING + ") , no code to check", hl7Path, AssertionType.VALUE);
+        }
+        else if (isTableLocal(tableID)){
+            results.addAssertion(tableID + " is a locally defined table, not checking code", hl7Path, AssertionType.VALUE);
+        } else {
+            ResourceCodeStore store = (ResourceCodeStore) resourceStoreFactory.getCodeStore(profileID, tableID);
+            if (store == null) {
+                results.addProfileException("No code store found for ID " + tableID, hl7Path, null);
+            } else {
+                try {
+                    List<String> validCodes = Arrays.asList(store.getValidCodes(tableID));
+                    if (!validCodes.isEmpty() && validCodes.contains("99zzz") && value.matches(LOCAL_TABLE_REGEX)) {
+                        results.addAssertion(value + " matches 99zzz where z is an alphanumeric character", hl7Path, AssertionType.VALUE);
+                    } else if (!validCodes.isEmpty() && !validCodes.contains(value)) {
+                        StringBuilder possibleCode = null;
+                        for (String code : validCodes) {
+                            if (possibleCode == null) {
+                                possibleCode = new StringBuilder(code);
+                            } else {
+                                possibleCode.append(", ");
+                                possibleCode.append(code);
+                            }
+
+                        }
+                        results.addNotification("Code " + value + " not found in table " + tableID
+                                        + ". Possible values are " + possibleCode.toString(),
+                                GazelleErrorCode.TABLE_VALUE_NOT_FOUND, hl7Path, value);
+                        ((GazelleHL7Exception) results.getLastNotification()).setHl7tableId(store.getResourceOid() + "#"
+                                + tableID.replace("HL7", ""));
+                    } else if (validCodes.contains(value)) {
+                        results.addAssertion(value + " is present in table " + tableID, hl7Path, AssertionType.VALUE);
+                    }
+                } catch (ProfileException e) {
+                    results.addProfileException(
+                            "An error occurred when retrieving values from table " + tableID + ": " + e.getMessage(),
+                            hl7Path, null);
+                }
+            }
+        }
 	}
 
 	private String makeTableName(String hl7Table) {
@@ -781,7 +791,7 @@ public class GazelleValidator {
 
 		// test field dataType
 		testType(msgField, profileField, encoded, profileID, true);
-
+        boolean canContinue = true;
 		// test field components
 		if ((profileField.getComponents() > 0) && !profileField.getUsage().equals(Optionality.NOT_SUPPORTED.getKey())) {
 			if (Composite.class.isAssignableFrom(msgField.getClass())) {
@@ -792,6 +802,11 @@ public class GazelleValidator {
 					Type messageComponent = null;
 					try {
 						messageComponent = msgFieldComposite.getComponent(i - 1);
+                        encoded = messageComponent.encode();
+                        if (encoded.equals(NULL_STRING)){
+                            results.addAssertion("Field is NULL (" + NULL_STRING + "), does not check subcomponents", hl7Path, AssertionType.VALUE);
+                            canContinue = false;
+                        }
 					} catch (DataTypeException e) {
 						results.addProfileException(
 								"Segment "
@@ -803,9 +818,14 @@ public class GazelleValidator {
 										+ " is defined in the message profile but does not exist in the Java class representing the segment",
 								hl7Path, null);
 						continue;
-					}
+					} catch (HL7Exception e){
+                        log.warn("Cannot encode field", e);
+                    }
 					testComponent(messageComponent, profileComponent, profileID);
 					hl7Path.removeLastItem();
+                    if (!canContinue){
+                        break;
+                    }
 				}
 				checkExtraComponents(msgFieldComposite, profileField.getComponents());
 			} else {
@@ -818,17 +838,23 @@ public class GazelleValidator {
 
 	public void testComponent(Type msgComponent, Component profileComponent, String profileID) {
 		testType(msgComponent, profileComponent, null, profileID, true);
-		// test children
-		if ((profileComponent.getSubComponents() > 0) && !profileComponent.getUsage().equals("X")
+        // test children
+        if ((profileComponent.getSubComponents() > 0) && !profileComponent.getUsage().equals("X")
 				&& hasContent(msgComponent)) {
 			if (Composite.class.isAssignableFrom(msgComponent.getClass())) {
 				Composite msgComposite = (Composite) msgComponent;
+                boolean canContinue = true;
 				for (int i = 1; i <= profileComponent.getSubComponents(); i++) {
 					SubComponent profileSubComponent = profileComponent.getSubComponent(i);
 					hl7Path.add(msgComponent.getName() + "-" + i + "(" + profileSubComponent.getName() + ")");
 					Type msgSubComposite = null;
 					try {
 						msgSubComposite = msgComposite.getComponent(i - 1);
+                        String encoded = msgSubComposite.encode();
+                        if (encoded.equals(NULL_STRING)){
+                            results.addAssertion("Component is NULL (" + NULL_STRING + "), does not check subcomponents", hl7Path, AssertionType.VALUE);
+                            canContinue = false;
+                        }
 					} catch (DataTypeException e) {
 						results.addProfileException(
 								"Field "
@@ -842,9 +868,14 @@ public class GazelleValidator {
 										+ "is defined in the message profile but does not exist in the Java class representing the message",
 								hl7Path, null);
 						continue;
-					}
-					testType(msgSubComposite, profileSubComponent, null, profileID, false);
+					} catch (HL7Exception e){
+                        log.warn("Cannot encode component", e);
+                    }
+					testType(msgSubComposite, profileSubComponent, null, profileID, true);
 					hl7Path.removeLastItem();
+                    if (!canContinue){
+                        break;
+                    }
 				}
 				checkExtraComponents(msgComposite, profileComponent.getSubComponents());
 			} else {
@@ -859,7 +890,7 @@ public class GazelleValidator {
 	private void checkExtraComponents(Composite comp, int numInProfile) {
 		StringBuffer extra = new StringBuffer();
 		for (int i = numInProfile; i < comp.getComponents().length; i++) {
-			String s = null;
+			String s;
 			try {
 				s = PipeParser.encode(comp.getComponent(i), enc);
 			} catch (DataTypeException e) {
@@ -910,7 +941,7 @@ public class GazelleValidator {
 								hl7Path, msgPrimitive.getValue());
 					}
 				} else {
-					results.addAssertion("Rule '" + rule.getDescription() + "' is fullfilled", hl7Path,
+					results.addAssertion("Rule '" + rule.getDescription() + "' is fulfilled", hl7Path,
 							AssertionType.FORMAT);
 				}
 			}

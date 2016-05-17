@@ -10,10 +10,10 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import net.ihe.gazelle.hl7.validator.report.HL7v2ValidationReport.ValidationStatus;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.ihe.gazelle.hl7.validator.report.HL7v2ValidationReport.ValidationStatus;
 
 @XmlRootElement(name = "ValidationResultsOverview")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -23,7 +23,7 @@ public class ValidationResultsOverview {
 
 	private final String SDF_DATE = "yyyy, MM dd";
 	private final String SDF_TIME = "hh:mm (aa)";
-	private static final String TOOL_NAME = "Gazelle HL7 Validator";
+	public static final String TOOL_NAME = "Gazelle HL7 Validator";
 	private static final String DISCLAIMER = "The GazelleHL7v2Validator is an experimental system. IHE-Europe assumes no responsibility whatsoever "
 			+ "for its use by other parties, and makes no guarantees, expressed or implied, about its quality, reliability, or "
 			+ "any other characteristic. We would appreciate acknowledgement if the service is used. "
@@ -51,7 +51,7 @@ public class ValidationResultsOverview {
 
 	}
 
-	public ValidationResultsOverview(String profileOid, String messageOid) {
+	public ValidationResultsOverview(final String profileOid, final String messageOid) {
 		this.profileOid = profileOid;
 		this.messageOid = messageOid;
 		this.validationDateTime = new Date();
@@ -61,19 +61,19 @@ public class ValidationResultsOverview {
 		return validationDateTime;
 	}
 
-	public void setValidationDateTime(Date validationDateTime) {
+	public void setValidationDateTime(final Date validationDateTime) {
 		this.validationDateTime = validationDateTime;
 	}
 
 	@XmlElement(name = "ValidationDate")
 	public String getValidationDate() {
-		SimpleDateFormat sdf = new SimpleDateFormat(SDF_DATE, Locale.ENGLISH);
+		final SimpleDateFormat sdf = new SimpleDateFormat(SDF_DATE, Locale.ENGLISH);
 		return sdf.format(validationDateTime);
 	}
 
 	@XmlElement(name = "ValidationTime")
 	public String getValidationTime() {
-		SimpleDateFormat sdf = new SimpleDateFormat(SDF_TIME, Locale.ENGLISH);
+		final SimpleDateFormat sdf = new SimpleDateFormat(SDF_TIME, Locale.ENGLISH);
 		return sdf.format(validationDateTime);
 	}
 
@@ -86,7 +86,7 @@ public class ValidationResultsOverview {
 		return profileOid;
 	}
 
-	public void setProfileOid(String profileOid) {
+	public void setProfileOid(final String profileOid) {
 		this.profileOid = profileOid;
 	}
 
@@ -94,7 +94,7 @@ public class ValidationResultsOverview {
 		return profileRevision;
 	}
 
-	public void setProfileRevision(String profileRevision) {
+	public void setProfileRevision(final String profileRevision) {
 		this.profileRevision = profileRevision;
 	}
 
@@ -102,7 +102,7 @@ public class ValidationResultsOverview {
 		return messageOid;
 	}
 
-	public void setMessageOid(String messageOid) {
+	public void setMessageOid(final String messageOid) {
 		this.messageOid = messageOid;
 	}
 
@@ -120,7 +120,7 @@ public class ValidationResultsOverview {
 		return validationAbortedReason;
 	}
 
-	public void setValidationAbortedReason(String validationAbortedReason) {
+	public void setValidationAbortedReason(final String validationAbortedReason) {
 		this.validationAbortedReason = validationAbortedReason;
 	}
 
@@ -128,7 +128,7 @@ public class ValidationResultsOverview {
 		return validationStatus;
 	}
 
-	public void setValidationStatus(ValidationStatus validationStatus) {
+	public void setValidationStatus(final ValidationStatus validationStatus) {
 		this.validationStatus = validationStatus;
 	}
 }

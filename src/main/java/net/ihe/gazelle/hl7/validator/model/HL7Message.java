@@ -19,262 +19,258 @@ package net.ihe.gazelle.hl7.validator.model;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Date;
-import java.util.List;
 
 import net.ihe.gazelle.hl7.validator.report.HL7v2ValidationReport;
 
 public class HL7Message implements Serializable {
 
-	private static final long serialVersionUID = -315076050894161909L;
-	public static final String ERROR = "ERROR";
-	public static final String WARNING = "WARNING";
-	public static final String IGNORE = "IGNORE";
+    private static final long serialVersionUID = -315076050894161909L;
+    public static final String ERROR = "ERROR";
+    public static final String WARNING = "WARNING";
+    public static final String IGNORE = "IGNORE";
 
-	private Integer id;
+    private Integer id;
 
-	private String message;
+    private String message;
 
-	private String oid;
+    private String oid;
 
-	private String hl7Version;
+    private String hl7Version;
 
-	private byte[] validationContext;
+    private byte[] validationContext;
 
-	private byte[] metadata;
+    private byte[] metadata;
 
-	private String detailedResults;
+    private Date validationDate;
 
-	private Date validationDate;
 
-	
-	private String encoding;
-	
+    private String encoding;
 
-	/**
-	 * for use by admin only, indicates if the validation of this message has raised profile exceptions or not
-	 */
-	private boolean raisesProfileExceptions;
 
-	String callerIP; // Stores the IP Address of the webservice caller
+    /**
+     * for use by admin only, indicates if the validation of this message has raised profile exceptions or not
+     */
+    private Boolean raisesProfileExceptions;
 
-	String testResult; // Stores the result of the validation for easy retrieve
-	// in the database.
+    String callerIP; // Stores the IP Address of the webservice caller
 
-	String profileOid;
+    String testResult; // Stores the result of the validation for easy retrieve
+    // in the database.
 
-	private String messageStructure;
+    String profileOid;
 
-	private String length;
+    private String messageStructure;
 
-	private String datatype;
+    private String length;
 
-	private String data;
+    private String datatype;
 
-	private HL7v2ValidationReport report;
+    private String data;
 
-	/**
-	 * Constructors
-	 */
-	public HL7Message() {
+    private HL7v2ValidationReport report;
 
-	}
+    /**
+     * Constructors
+     */
+    public HL7Message() {
 
-	/**
-	 * Getters and Setters
-	 */
-	public String getMessage() {
-		return message;
-	}
+    }
 
-	public void setMessage(String message) {
-		this.message = message;
-	}
+    public HL7Message(final String xmlValidationContext, final String xmlMessageMetaData, final String inMessage) {
+        this.message = inMessage.replace("\n", "\r");
+        this.validationContext = xmlValidationContext.getBytes(Charset.forName("UTF-8"));
+        if (xmlMessageMetaData != null) {
+            this.metadata = xmlMessageMetaData.getBytes();
+        }
+        this.validationDate = new Date();
+    }
 
-	public String getOid() {
-		return oid;
-	}
+    /**
+     * Getters and Setters
+     */
+    public String getMessage() {
+        return message;
+    }
 
-	public void setOid(String messageOID) {
-		this.oid = messageOID;
-	}
+    public void setMessage(final String message) {
+        this.message = message;
+    }
 
-	public String getHl7Version() {
-		return hl7Version;
-	}
+    public String getOid() {
+        return oid;
+    }
 
-	public void setHl7Version(String referencedStandard) {
-		this.hl7Version = referencedStandard;
-	}
+    public void setOid(final String messageOID) {
+        this.oid = messageOID;
+    }
 
-	public String getMetadata() {
-		if (metadata != null) {
-			return new String(metadata, Charset.forName("UTF-8"));
-		} else {
-			return null;
-		}
-	}
+    public String getHl7Version() {
+        return hl7Version;
+    }
 
-	public void setMetadata(String messageMetaData) {
-		if (messageMetaData != null) {
-			this.metadata = messageMetaData.getBytes(Charset.forName("UTF-8"));
-		} else {
-			this.metadata = null;
-		}
-	}
+    public void setHl7Version(final String referencedStandard) {
+        this.hl7Version = referencedStandard;
+    }
 
-	public String getDetailedResults() {
-		return detailedResults;
-	}
+    public String getMetadata() {
+        if (metadata != null) {
+            return new String(metadata, Charset.forName("UTF-8"));
+        } else {
+            return null;
+        }
+    }
 
-	public void setDetailedResults(String detailedResults) {
-		this.detailedResults = detailedResults;
-	}
+    public void setMetadata(final String messageMetaData) {
+        if (messageMetaData != null) {
+            this.metadata = messageMetaData.getBytes(Charset.forName("UTF-8"));
+        } else {
+            this.metadata = null;
+        }
+    }
 
-	public String getCallerIP() {
-		return callerIP;
-	}
+    public String getCallerIP() {
+        return callerIP;
+    }
 
-	public void setCallerIP(String callerIP) {
-		this.callerIP = callerIP;
-	}
+    public void setCallerIP(final String callerIP) {
+        this.callerIP = callerIP;
+    }
 
-	public Date getValidationDate() {
-		return validationDate;
-	}
+    public Date getValidationDate() {
+        return validationDate;
+    }
 
-	public void setValidationDate(Date lastChanged) {
-		this.validationDate = lastChanged;
-	}
+    public void setValidationDate(final Date lastChanged) {
+        this.validationDate = lastChanged;
+    }
 
-	public String getTestResult() {
-		return testResult;
-	}
+    public String getTestResult() {
+        return testResult;
+    }
 
-	public void setTestResult(String testResult) {
-		this.testResult = testResult;
-	}
+    public void setTestResult(final String testResult) {
+        this.testResult = testResult;
+    }
 
-	public String getProfileOid() {
-		return profileOid;
-	}
+    public String getProfileOid() {
+        return profileOid;
+    }
 
-	public void setProfileOid(String profileOid) {
-		this.profileOid = profileOid;
-	}
+    public void setProfileOid(final String profileOid) {
+        this.profileOid = profileOid;
+    }
 
-	public void setValidationContext(String validationContext) {
-		if (validationContext != null) {
-			this.validationContext = validationContext.getBytes(Charset.forName("UTF-8"));
-		} else {
-			this.validationContext = null;
-		}
-	}
+    public void setValidationContext(final String validationContext) {
+        if (validationContext != null) {
+            this.validationContext = validationContext.getBytes(Charset.forName("UTF-8"));
+        } else {
+            this.validationContext = null;
+        }
+    }
 
-	public String getValidationContextAsString() {
-		if (this.validationContext != null) {
-			return new String(this.validationContext, Charset.forName("UTF-8"));
-		} else {
-			return null;
-		}
-	}
+    public String getValidationContextAsString() {
+        if (this.validationContext != null) {
+            return new String(this.validationContext, Charset.forName("UTF-8"));
+        } else {
+            return null;
+        }
+    }
 
-	public byte[] getValidationContext() {
-		return validationContext;
-	}
+    public byte[] getValidationContext() {
+        return validationContext;
+    }
 
-	public String getMessageStructure() {
-		return messageStructure;
-	}
+    public String getMessageStructure() {
+        return messageStructure;
+    }
 
-	public void setMessageStructure(String messageStructure) {
-		this.messageStructure = messageStructure;
-	}
+    public void setMessageStructure(final String messageStructure) {
+        this.messageStructure = messageStructure;
+    }
 
-	public String getDatatype() {
-		return datatype;
-	}
+    public String getDatatype() {
+        return datatype;
+    }
 
-	public void setDatatype(String datatype) {
-		this.datatype = datatype;
-	}
+    public void setDatatype(final String datatype) {
+        this.datatype = datatype;
+    }
 
-	public String getData() {
-		return data;
-	}
+    public String getData() {
+        return data;
+    }
 
-	public void setData(String data) {
-		this.data = data;
-	}
+    public void setData(final String data) {
+        this.data = data;
+    }
 
-	public void setLength(String error2) {
-		this.length = error2;
-	}
+    public void setLength(final String error2) {
+        this.length = error2;
+    }
 
-	public String getLength() {
-		return length;
-	}
+    public String getLength() {
+        return length;
+    }
 
-	public void setRaisesProfileExceptions(boolean raisesProfileExceptions) {
-		this.raisesProfileExceptions = raisesProfileExceptions;
-	}
+    public void setRaisesProfileExceptions(final Boolean raisesProfileExceptions) {
+        this.raisesProfileExceptions = raisesProfileExceptions;
+    }
 
-	public boolean isRaisesProfileExceptions() {
-		return raisesProfileExceptions;
-	}
+    public Boolean getRaisesProfileExceptions() {
+        return raisesProfileExceptions;
+    }
 
-	public Integer getId() {
-		return id;
-	}
+    public Integer getId() {
+        return id;
+    }
 
-	public HL7v2ValidationReport getReport() {
-		return report;
-	}
+    public void setId(final Integer id) {
+        this.id = id;
+    }
 
-	public void setReport(HL7v2ValidationReport report) {
-		this.report = report;
-	}
+    public HL7v2ValidationReport getReport() {
+        return report;
+    }
 
-	public void setDetailedResults() {
-		if (this.report != null) {
-			this.detailedResults = this.report.toString();
-		}
-	}
+    public void setReport(final HL7v2ValidationReport report) {
+        this.report = report;
+    }
 
-	public String getEncoding() {
-		return encoding;
-	}
+    public String getEncoding() {
+        return encoding;
+    }
 
-	public void setEncoding(String encoding) {
-		this.encoding = encoding;
-	}
+    public void setEncoding(final String encoding) {
+        this.encoding = encoding;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((oid == null) ? 0 : oid.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((oid == null) ? 0 : oid.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null){
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		HL7Message other = (HL7Message) obj;
-		if (oid == null) {
-			if (other.oid != null) {
-				return false;
-			}
-		} else if (!oid.equals(other.oid)) {
-			return false;
-		}
-		return true;
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final HL7Message other = (HL7Message) obj;
+        if (oid == null) {
+            if (other.oid != null) {
+                return false;
+            }
+        } else if (!oid.equals(other.oid)) {
+            return false;
+        }
+        return true;
+    }
 }

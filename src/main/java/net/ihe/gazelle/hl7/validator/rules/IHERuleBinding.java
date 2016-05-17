@@ -15,11 +15,8 @@ public class IHERuleBinding extends RuleBinding<IHEValidationRule> {
 
 	private static final String STAR = "*";
 	
-	private String messageProfileIdentifier;
-
-	public IHERuleBinding(String theVersion, String theScope, String messageProfileIdentifier, IHEValidationRule theRule) {
+	public IHERuleBinding(String theVersion, String theScope, IHEValidationRule theRule) {
 		super(theVersion, theScope, theRule);
-		this.messageProfileIdentifier = messageProfileIdentifier;
 	}
 
 	@Override
@@ -32,18 +29,6 @@ public class IHERuleBinding extends RuleBinding<IHEValidationRule> {
 		return doesRuleApply(getScope(), theType);
 	}
 	
-	public boolean appliesToMessagProfileIdentifier(String profileId){
-		if (profileId == null && messageProfileIdentifier == null){
-			return true;
-		} else if (STAR.equals(messageProfileIdentifier)){
-			return true;
-		} else if (profileId != null && profileId.contains(messageProfileIdentifier)){
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	protected static boolean doesRuleApply(String theBindingData, String theItemData) {
 		boolean applies = false;
 		if ((theBindingData.charAt(0) == '*') && theItemData.endsWith(theBindingData.replace("*", ""))) {
@@ -57,7 +42,4 @@ public class IHERuleBinding extends RuleBinding<IHEValidationRule> {
 		return applies;
 	}
 
-	public String getMessageProfileIdentifier() {
-		return messageProfileIdentifier;
-	}
 }

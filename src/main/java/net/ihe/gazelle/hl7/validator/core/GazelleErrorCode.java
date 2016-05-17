@@ -22,7 +22,8 @@ public enum GazelleErrorCode {
 	FORMAT(1019, "Problem parsing message"),
 	PRIMITIVE_RULE(1020, "Primitive rule not fulfilled"),
 	UNKNOWN(1021, "Unknown error type"), 
-	CONDITIONAL (1022, "Conditional");
+	CONDITIONAL (1022, "Conditional"),
+    WARNING(9001, "Warning");
 
 	private static final String HL70357 = "HL70357";
 	private final int code;

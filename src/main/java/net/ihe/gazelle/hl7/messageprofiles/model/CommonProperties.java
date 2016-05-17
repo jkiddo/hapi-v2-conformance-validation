@@ -43,7 +43,7 @@ public abstract class CommonProperties implements Serializable {
 		return oid;
 	}
 
-	public void setOid(String oid) {
+	public void setOid(final String oid) {
 		this.oid = oid;
 	}
 
@@ -51,7 +51,7 @@ public abstract class CommonProperties implements Serializable {
 		return content;
 	}
 
-	public void setContent(byte[] content) {
+	public void setContent(final byte[] content) {
 		if (content != null) {
 			this.content = content.clone();
 		}
@@ -61,7 +61,7 @@ public abstract class CommonProperties implements Serializable {
 		return lastChanged;
 	}
 
-	public void setLastChanged(Date lastChanged) {
+	public void setLastChanged(final Date lastChanged) {
 		this.lastChanged = lastChanged;
 	}
 
@@ -69,7 +69,7 @@ public abstract class CommonProperties implements Serializable {
 		return lastModifier;
 	}
 
-	public void setLastModifier(String lastModifier) {
+	public void setLastModifier(final String lastModifier) {
 		this.lastModifier = lastModifier;
 	}
 
@@ -77,7 +77,7 @@ public abstract class CommonProperties implements Serializable {
 		return importedWithErrors;
 	}
 
-	public void setImportedWithErrors(boolean importedWithErrors) {
+	public void setImportedWithErrors(final boolean importedWithErrors) {
 		this.importedWithErrors = importedWithErrors;
 	}
 
@@ -85,15 +85,15 @@ public abstract class CommonProperties implements Serializable {
 		return revision;
 	}
 
-	public void setRevision(String revision) {
+	public void setRevision(final String revision) {
 		this.revision = revision;
 	}
 
-	public void setContent(String inContent) {
+	public void setContent(final String inContent) {
 		if (inContent != null) {
 			try {
 				this.content = inContent.getBytes("UTF8");
-			} catch (UnsupportedEncodingException e) {
+			} catch (final UnsupportedEncodingException e) {
 				this.content = null;
 				log.error(e.getMessage(), e);
 			}
@@ -111,7 +111,7 @@ public abstract class CommonProperties implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -121,7 +121,7 @@ public abstract class CommonProperties implements Serializable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		CommonProperties other = (CommonProperties) obj;
+		final CommonProperties other = (CommonProperties) obj;
 		if (oid == null) {
 			if (other.oid != null) {
 				return false;

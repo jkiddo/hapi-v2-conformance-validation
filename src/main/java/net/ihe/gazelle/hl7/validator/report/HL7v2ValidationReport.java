@@ -11,10 +11,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import net.ihe.gazelle.hl7.messageprofiles.model.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.ihe.gazelle.hl7.messageprofiles.model.Resource;
 
 @XmlRootElement(name = "SummaryResults")
 @XmlAccessorType(XmlAccessType.NONE)
@@ -38,7 +38,7 @@ public class HL7v2ValidationReport {
 		return overview;
 	}
 
-	public void setOverview(ValidationResultsOverview overview) {
+	public void setOverview(final ValidationResultsOverview overview) {
 		this.overview = overview;
 	}
 
@@ -49,7 +49,7 @@ public class HL7v2ValidationReport {
 		return counters;
 	}
 
-	public void setCounters(ValidationCounters counters) {
+	public void setCounters(final ValidationCounters counters) {
 		this.counters = counters;
 	}
 
@@ -57,11 +57,11 @@ public class HL7v2ValidationReport {
 		return resources;
 	}
 
-	public void setResources(UsedResources resources) {
+	public void setResources(final UsedResources resources) {
 		this.resources = resources;
 	}
 
-	public void setResources(List<Resource> resources) {
+	public void setResources(final List<Resource> resources) {
 		this.resources = new UsedResources();
 		this.resources.setResources(resources);
 	}
@@ -73,7 +73,7 @@ public class HL7v2ValidationReport {
 		return results;
 	}
 
-	public void setResults(ValidationResults results) {
+	public void setResults(final ValidationResults results) {
 		this.results = results;
 	}
 
@@ -83,10 +83,10 @@ public class HL7v2ValidationReport {
 		FAILED(3, "FAILED"),
 		PASSED(4, "PASSED");
 
-		private int level;
-		private String status;
+		private final int level;
+		private final String status;
 
-		ValidationStatus(int i, String status) {
+		ValidationStatus(final int i, final String status) {
 			this.level = i;
 			this.status = status;
 		}
@@ -100,14 +100,14 @@ public class HL7v2ValidationReport {
 		}
 	}
 
-	public static HL7v2ValidationReport createFromXml(String xmlReport){
-		ByteArrayInputStream is = new ByteArrayInputStream(xmlReport.getBytes(Charset.forName("UTF-8")));
+	public static HL7v2ValidationReport createFromXml(final String xmlReport){
+		final ByteArrayInputStream is = new ByteArrayInputStream(xmlReport.getBytes(Charset.forName("UTF-8")));
 		try {
-			JAXBContext jc = JAXBContext.newInstance(HL7v2ValidationReport.class);
-			Unmarshaller u = jc.createUnmarshaller();
-			HL7v2ValidationReport object = (HL7v2ValidationReport) u.unmarshal(is);
+			final JAXBContext jc = JAXBContext.newInstance(HL7v2ValidationReport.class);
+			final Unmarshaller u = jc.createUnmarshaller();
+			final HL7v2ValidationReport object = (HL7v2ValidationReport) u.unmarshal(is);
 			return object;
-		}catch(Exception e){
+		}catch(final Exception e){
 			log.error("Unable to unmarshall validation report");
 			return null;
 		}
