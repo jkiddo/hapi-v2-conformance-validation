@@ -19,13 +19,15 @@ import javax.xml.bind.JAXBException;
 import org.jkiddo.hapi.v2x.ihe.IHEHapiContext;
 import org.jkiddo.hapi.v2x.ihe.TypedProfileStore;
 import org.openehealth.ipf.gazelle.validation.core.stub.HL7V2XConformanceProfile;
+import org.openehealth.ipf.gazelle.validation.core.stub.HL7V2XStaticDef;
+
+import com.google.common.collect.FluentIterable;
 
 import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.conf.ProfileException;
 import ca.uhn.hl7v2.llp.LLPException;
 import ca.uhn.hl7v2.model.Message;
 import ca.uhn.hl7v2.parser.PipeParser;
-import ca.uhn.hl7v2.validation.ValidationExceptionHandler;
 
 @Path(ValidationServlet.NAME)
 @Singleton
@@ -34,11 +36,11 @@ public class ValidationServlet {
 	public final static String NAME = "/conformance";
 
 	private final TypedProfileStore profileStore;
-	private PipeParser pp;
-	private IHEHapiContext context;
+	private final PipeParser pp;
+	private final IHEHapiContext context;
 
 	@Inject
-	public ValidationServlet(TypedProfileStore ps, IHEHapiContext context) throws HL7Exception {
+	public ValidationServlet(final TypedProfileStore ps, final IHEHapiContext context) throws HL7Exception {
 		this.profileStore = ps;
 		this.context = context;
 		this.pp = new PipeParser();
@@ -55,9 +57,10 @@ public class ValidationServlet {
 	@Produces({ MediaType.TEXT_PLAIN })
 	@Consumes({ MediaType.APPLICATION_XML })
 	public String addConformanceSpec(final HL7V2XConformanceProfile cs,
-			@Context HttpServletRequest httpRequest) throws IOException,
+			@Context final HttpServletRequest httpRequest) throws IOException,
 			JAXBException {
-		return addConformanceSpec(cs.getIdentiifer(), cs, httpRequest);
+		final HL7V2XStaticDef stat = FluentIterable.from(cs.getDynamicDevesAndHL7V2XStaticDevesAndHL7V2XStaticDefReves()).filter(HL7V2XStaticDef.class).first().get();
+		return addConformanceSpec(stat.getMsgStructID(), cs, httpRequest);
 	}
 
 	@POST
@@ -67,7 +70,7 @@ public class ValidationServlet {
 	public String addConformanceSpec(
 			@PathParam("profileId") final String profileId,
 			final HL7V2XConformanceProfile cs,
-			@Context HttpServletRequest httpRequest) throws IOException,
+			@Context final HttpServletRequest httpRequest) throws IOException,
 			JAXBException {
 		profileStore.persistProfile(profileId, cs);
 		return "Great - thanks for the conformance profile (with ID: "
@@ -95,16 +98,16 @@ public class ValidationServlet {
 	@Path("test")
 	@Consumes({ MediaType.TEXT_PLAIN })
 	@Produces({ MediaType.TEXT_PLAIN })
-	public String doSend(String message) throws HL7Exception, LLPException,
+	public String doSend(final String message) throws HL7Exception, LLPException,
 			IOException {
-		Message hl7Message = pp.parse(message);
+		final Message hl7Message = pp.parse(message);
 		try {
-			Object response = context.getMessageValidator().validate(hl7Message,
-					(ValidationExceptionHandler<Object>) context
+			final Object response = context.getMessageValidator().validate(hl7Message,
+					context
 							.getValidationExceptionHandlerFactory()
 							.getNewInstance(context));
 			return response.toString();
-		} catch (HL7Exception e) {
+		} catch (final HL7Exception e) {
 			return e.getMessage();
 		}
 	}
