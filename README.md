@@ -25,3 +25,6 @@ Adds the conformance profile in the body of the request to the set of available 
 
 ##### POST /conformance/test
 Tests the HL7v2 hats'n'pipes message located in the body of the request against the profile specified with the ID in MSH-21 in the message.
+
+
+Profiles from IHE can be found at svn://scm.gforge.inria.fr/svnroot/gazelle/Data/trunk or https://gforge.inria.fr/scm/viewvc.php/gazelle/Data/trunk/
